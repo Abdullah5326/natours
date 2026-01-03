@@ -18,16 +18,18 @@ const {
   updatePassword,
   protect,
   restrictTo,
+  logout,
 } = require('../controller/authController');
 const router = express.Router();
 
 router.post('/signup', signUpUser);
 router.post('/login', login);
+router.get('/logout', logout);
 router.post('/forgotPassword', forgotPassword);
 router.patch('/resetPassword/:token', resetPassword);
 
 router.use(protect);
-router.patch('/updatePassword/:id', updatePassword);
+router.patch('/updatePassword', updatePassword);
 router.patch('/updateMe', updateMe);
 router.delete('/deleteMe', deleteMe);
 router.get('/me', getMe, getUser);

@@ -62,25 +62,25 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-// userSchema.index({ user: 1, tour: 1 }, { unique: true });
+userSchema.index({ user: 1, tour: 1 }, { unique: true });
 
-// userSchema.pre('save', async function (next) {
-//   if (!this.isModified('password')) return next();
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
 
-//   this.password = await bcrypt.hash(this.password, 12);
+  this.password = await bcrypt.hash(this.password, 12);
 
-//   this.confirmPassword = undefined;
+  this.confirmPassword = undefined;
 
-//   next();
-// });
+  next();
+});
 
-// userSchema.pre('save', function (next) {
-//   if (!this.isModified('password') || this.isNew) return next();
+userSchema.pre('save', function (next) {
+  if (!this.isModified('password') || this.isNew) return next();
 
-//   this.passwordChangedAt = Date.now() - 1000;
+  this.passwordChangedAt = Date.now() - 1000;
 
-//   next();
-// });
+  next();
+});
 
 userSchema.methods.correctPassword = function (
   candidatePassword,

@@ -31,7 +31,7 @@ router
 
 router
   .route('/:id')
-  .get(getTour)
+  .get(protect, getTour)
   .delete(protect, restrictTo('lead-guide', 'admin'), deleteTour)
   .patch(protect, restrictTo('lead-guide', 'admin'), updateTour);
 

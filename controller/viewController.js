@@ -7,6 +7,8 @@ exports.getOverview = catchAsync(async (req, res, next) => {
   // 1) Get tour data from collection
   const tours = await Tour.find();
 
+  console.log(tours[0].slug);
+
   // 2) Build template
   // 3) Render that template using tour data from 1)
   res.status(200).render('overview', {
@@ -17,6 +19,7 @@ exports.getOverview = catchAsync(async (req, res, next) => {
 
 exports.getTour = catchAsync(async (req, res, next) => {
   // 1) Get the data, for the requested tour (including reviews and guides)
+  console.log(req.params);
   const tour = await Tour.findOne({ slug: req.params.slug }).populate({
     path: 'reviews',
     fields: 'review rating user',
@@ -28,6 +31,7 @@ exports.getTour = catchAsync(async (req, res, next) => {
 
   // 2) Build template
   // 3) Render template using data from 1)
+  console.log(tour.slug);
   res.status(200).render('tour', {
     title: `${tour.name} Tour`,
     tour,
@@ -40,13 +44,15 @@ exports.getLoginForm = (req, res) => {
   });
 };
 
-exports.getAccount = (req, res) => {
+exports.getAccount = async (req, res) => {
   res.status(200).render('account', {
     title: 'Your account',
   });
 };
 
-exports.updateUserData = catchAsync(async (req, res, next) => {
+exports.updateUserData = async (req, res) => {
+  console.log('yes', req.body);
+
   const updatedUser = await User.findByIdAndUpdate(
     req.user.id,
     {
@@ -63,4 +69,4 @@ exports.updateUserData = catchAsync(async (req, res, next) => {
     title: 'Your account',
     user: updatedUser,
   });
-});
+};
