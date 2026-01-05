@@ -5,6 +5,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
+const compression = require('compression');
 const helmet = require('helmet');
 const xss = require('xss-clean');
 const hpp = require('hpp');
@@ -14,6 +15,7 @@ const globalErrorHandler = require('./controller/errorController');
 const tourRouter = require('./routes/tourRoute');
 const userRouter = require('./routes/userRoute');
 const reviewRouter = require('./routes/reviewRoute');
+const bookingRouter = require('./routes/bookingRoute');
 const viewRouter = require('./routes/viewRoute');
 
 const app = express();
@@ -30,6 +32,7 @@ const limiter = rateLimit({
 // app.use(xss());
 
 app.use('/api', limiter);
+app.use(compression());
 
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views'));
@@ -46,6 +49,7 @@ app.use('/', viewRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/reviews', reviewRouter);
+app.use('/api/v1/booking', bookingRouter);
 
 app.all('/*splat', (req, res, next) => {
   next(new AppError(`Cannot find ${req.originalUrl} on this server!`, 404));

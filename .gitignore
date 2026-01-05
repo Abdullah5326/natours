@@ -2,7 +2,7 @@
 node_modules/
 
 # Environment variables
-.env
+*.env
 .env.local
 .env.production
 
@@ -33,3 +33,5 @@ Thumbs.db
 __tests__/
 *.test.js
 *.spec.js
+
+.cache/

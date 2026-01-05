@@ -1,27 +1,64 @@
-const nodemailor = require('nodemailer');
+const nodemailer = require('nodemailer');
+const htmlToText = require('html-to-text');
+const pug = require('pug');
 
-exports.sendEmail = async (options) => {
-  console.log(
-    process.env.EMAIL_HOST,
-    process.env.EMAIL_PORT,
-    process.env.EMAIL_USERNAME,
-    process.env.EMAIL_PASSWORD,
-  );
-  const transporter = nodemailor.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    auth: {
-      user: process.env.EMAIL_USERNAME,
-      pass: process.env.EMAIL_PASSWORD,
-    },
-  });
+module.exports = class Email {
+  constructor(user, url) {
+    this.to = user.email;
+    this.firstName = user.name.split(' ')[0];
+    this.url = url;
+    this.from = `Abdullah <${process.env.EMAIL_FROM}>`;
+  }
 
-  const mailOptions = {
-    from: 'Abdullah <abdullahweb53264189@gmail.com>',
-    to: options.email,
-    subject: options.subject,
-    text: options.message,
-  };
+  newTransport() {
+    if (process.env.NODE_ENV === 'production')
+      return nodemailer.createTransport({
+        host: 'smtp-relay.brevo.com',
+        port: 587,
+        secure: false, // false for port 587
+        auth: {
+          user: process.env.BREVO_LOGIN, // your Login
+          pass: process.env.BREVO_PASSWORD, // your Password
+        },
+      });
 
-  await transporter.sendMail(mailOptions);
+    return nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,
+      port: process.env.EMAIL_PORT,
+      auth: {
+        user: process.env.EMAIL_USERNAME,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+  }
+
+  async send(template, subject) {
+    const html = pug.renderFile(`${__dirname}/../views/email/${template}.pug`, {
+      firstName: this.firstName,
+      url: this.url,
+      subject,
+    });
+
+    // 2) Define email options
+    const mailOptions = {
+      from: this.from,
+      to: this.to,
+      subject,
+      html,
+      // text: htmlToText.fromString(html),
+    };
+
+    await this.newTransport().sendMail(mailOptions);
+  }
+
+  async sendWelcome() {
+    await this.send('welcome', 'Welcome to the Natours Family!');
+  }
+
+  async sendResetPassword() {
+    await this.send(
+      'passwordReset',
+      'Reset your password (only valid  for 10mins)',
+    );
+  }
 };

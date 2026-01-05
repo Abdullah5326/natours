@@ -7,7 +7,7 @@ const bcrypt = require('bcryptjs');
 const catchAsync = require('../utils/catchAsync');
 const User = require('./../models/userModel');
 const AppError = require('../utils/appError');
-const { sendEmail } = require('../utils/email');
+const Email = require('../utils/email');
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET_KEY, {
@@ -46,6 +46,9 @@ exports.signUpUser = catchAsync(async (req, res, next) => {
     role: req.body.role,
   };
   const newUser = await User.create(reqBody);
+  // http://127.0.0.1:3000/me
+  const url = `${req.protocol}://${req.get('host')}/me`;
+  new Email(newUser, url).sendWelcome();
   createSendToken(newUser, 201, res);
 });
 
@@ -152,26 +155,19 @@ exports.isLoggedIn = async (req, res, next) => {
 };
 
 exports.forgotPassword = catchAsync(async (req, res, next) => {
-  const user = await User.findOne({ email: req.body?.email });
-
-  if (!user)
-    return next(new AppError('There is not user with that email', 404));
-
-  const resetToken = user.createPasswordResetToken();
-
-  user.save({ validateBeforeSave: false });
-  const resetURL = `${req.protocol}://${req.get(
-    'host',
-  )}/api/v1/users/resetPassword/${resetToken}`;
-
-  const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${resetURL}.\nIf you didn't forget your password, please ignore this email!`;
-
   try {
-    await sendEmail({
-      email: user.email,
-      subject: 'Your password reset token (valid for 10 min)',
-      message,
-    });
+    const user = await User.findOne({ email: req.body?.email });
+
+    if (!user)
+      return next(new AppError('There is not user with that email', 404));
+
+    const resetToken = user.createPasswordResetToken();
+
+    user.save({ validateBeforeSave: false });
+    const resetURL = `${req.protocol}://${req.get(
+      'host',
+    )}/api/v1/users/resetPassword/${resetToken}`;
+    new Email(user, resetURL).sendResetPassword();
 
     res.status(200).json({
       status: 'success',
@@ -189,12 +185,10 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 });
 
 exports.resetPassword = catchAsync(async (req, res, next) => {
-  console.log('working');
   const hashedToken = crypto
     .createHash('sha256')
     .update(req.params.token)
     .digest('hex');
-  console.log(hashedToken);
   const user = await User.findOne({
     passwordResetToken: hashedToken,
     passwordResetExpiresIn: { $gt: Date.now() },
@@ -215,8 +209,6 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
   // 1) Get user from collection
-  console.log(req.user.id);
-  console.log(req.body);
   const user = await User.findById(req.user.id).select('+password');
 
   // 2) Check if POSTed current password is correct

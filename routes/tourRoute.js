@@ -9,6 +9,8 @@ const {
   aliasTopTours,
   getTourStats,
   getMonthlyPlans,
+  uploadTourPhotos,
+  resizeTourPhotos,
 } = require('./../controller/tourController');
 const { protect, restrictTo } = require('../controller/authController');
 const reviewRouter = require('./reviewRoute');
@@ -33,6 +35,12 @@ router
   .route('/:id')
   .get(protect, getTour)
   .delete(protect, restrictTo('lead-guide', 'admin'), deleteTour)
-  .patch(protect, restrictTo('lead-guide', 'admin'), updateTour);
+  .patch(
+    protect,
+    restrictTo('lead-guide', 'admin'),
+    uploadTourPhotos,
+    resizeTourPhotos,
+    updateTour,
+  );
 
 module.exports = router;
